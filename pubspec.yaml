@@ -30,11 +30,29 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  camera: ^0.10.5+2
+  
+  path_provider: ^2.0.14
+  agora_rtc_engine: ^6.2.4
+  permission_handler: ^11.0.0
+
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.1.0
+  pinput: ^5.0.1
+  intl: ^0.20.2
+  image_picker: ^1.1.2
+  dio: ^5.8.0+1
+  flutter_bloc: ^9.1.0
+  tflite_flutter: ^0.11.0
+  http: ^1.3.0
+  screenshot: ^3.0.0
+  google_fonts: ^6.2.1
+  shared_preferences: ^2.5.3
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -58,12 +76,13 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  To add assets to your application, add an assets section, like this:
+  # To add assets to your application, add an assets section, like this:
   assets:
-    - images/splash_image.png
-    - images/Frame.png
-    - images/Frame2.png
-    - images/Frame3.png
+    - assets/images/
+    - assets/navbar/
+    
+    
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -80,7 +99,9 @@ flutter:
     - family: Pacifico
       fonts:
         - asset: assets/fonts/Pacifico-Regular.ttf
-        - asset: assets/fonts/Crimson_Text/CrimsonText-BoldItalic.ttf
-  #
+    - family: CrimsonText
+      fonts:
+        - asset: assets/fonts/CrimsonText-Regular.ttf
+        
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

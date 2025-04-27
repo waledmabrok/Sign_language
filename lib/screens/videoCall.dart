@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:screenshot/screenshot.dart';
 import '../constant/constant.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -22,6 +23,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String meetingId = "";
   List<Map<String, dynamic>> messages = [];
   final TextEditingController messageController = TextEditingController();
+  String translatedText = "a";
+  final screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -36,6 +39,51 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     _dispose();
     super.dispose();
+  }
+
+  Future<void> captureAndSend() async {
+    screenshotController.capture().then((Uint8List? capturedImage) {
+      if (capturedImage != null) {
+        sendImageToServer(capturedImage); // إرسال الصورة إلى السيرفر
+      }
+    }).catchError((e) {
+      print("Error capturing screenshot: $e");
+    });
+  }
+
+  Future<void> sendImageToServer(Uint8List image) async {
+    final uri = Uri.parse('$apiBase/predict');
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(http.MultipartFile.fromBytes('image', image,
+          filename: 'screenshot.jpg'));
+
+    try {
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final result = await response.stream.bytesToString();
+        final jsonResponse = json.decode(result);
+        setState(() {
+          translatedText = jsonResponse['result'] ?? "No translation available";
+        });
+      } else {
+        print("❌ Failed to send image: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error sending image: $e");
+    }
+  }
+
+  Future<void> fetchTranslation() async {
+    if (meetingId.isEmpty) return;
+    final response = await http.get(Uri.parse("$apiBase/translate/$meetingId"));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        translatedText = data['text'] ?? "";
+      });
+    } else {
+      print("❌ Failed to fetch translation: ${response.statusCode}");
+    }
   }
 
   Future<void> startMeetingAndFetchChat() async {
@@ -55,7 +103,12 @@ class _MyHomePageState extends State<MyHomePage> {
           });
           print("✅ meeting id from server: $meetingId");
           fetchMessages();
-          Timer.periodic(const Duration(seconds: 3), (_) => fetchMessages());
+          fetchTranslation();
+          Timer.periodic(const Duration(seconds: 3), (_) {
+            fetchMessages();
+            fetchTranslation();
+            captureAndSend();
+          });
         } else {
           print("❌ Failed to get meeting ID: ${response.statusCode}");
         }
@@ -154,6 +207,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    String imagePath = '';
+    // تحقق من أن النص ليس فارغًا
+
+// تحقق من أن النص ليس فارغًا
+    if (translatedText.isNotEmpty) {
+      // الحصول على آخر حرف من النص المترجم (أو الحرف الأخير المدخل)
+      String lastChar = translatedText[translatedText.length - 1].toLowerCase();
+
+      // التأكد من أن الحرف في النطاق من 'a' إلى 'z'
+      if (lastChar.compareTo('a') >= 0 && lastChar.compareTo('z') <= 0) {
+        // بناء مسار الصورة بناءً على الحرف الأخير
+        imagePath = 'assets/images/image${lastChar}.png';
+      }
+    }
     return Scaffold(
       body: Stack(
         children: [
@@ -189,7 +256,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               )
                             : const Center(
-                                child: CircularProgressIndicator(),
+                                child: CircularProgressIndicator(
+                                  color: Color(0xff0051FF),
+                                ),
                               ),
                       ),
                     ),
@@ -238,8 +307,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: const Color(0xFF003AB6),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.volume_up, color: Colors.white, size: 40),
+                  child: Center(
+                    child: imagePath.isNotEmpty
+                        ? Image.asset(imagePath,
+                            width: 100, height: 90) // عرض الصورة
+                        : const Icon(Icons.volume_up,
+                            color: Colors.white,
+                            size: 40), // في حال لم توجد صورة
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -251,16 +325,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: /*Text(
-                        'I Love You',
-                        style: TextStyle(
+                      child: Text(
+                        translatedText.isNotEmpty
+                            ? translatedText
+                            : "Waiting for translation...",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,
-                        ),*/
-                          Text(
-                        "Meeting ID: $meetingId",
-                        style: TextStyle(color: Colors.white),
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -272,8 +346,8 @@ class _MyHomePageState extends State<MyHomePage> {
           // ✅ Chat messages
           Positioned(
             bottom: 70,
-            left: 12,
-            right: 12,
+            left: 16,
+            right: 16,
             top: 390,
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -308,8 +382,8 @@ class _MyHomePageState extends State<MyHomePage> {
           // ✅ Text input
           Positioned(
             bottom: 10,
-            left: 8,
-            right: 8,
+            left: 16,
+            right: 16,
             child: Row(
               children: [
                 Expanded(
@@ -323,7 +397,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: messageController,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
-                        hintText: "اكتب رسالة...",
+                        hintText: "send message...",
                       ),
                     ),
                   ),

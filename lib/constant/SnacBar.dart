@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void showCustomSnackBar(
   BuildContext context, {
@@ -18,8 +17,8 @@ void showCustomSnackBar(
           Expanded(
             child: Text(
               message,
-              style:  TextStyle(
-                  fontFamily: 'BalooBhaijaan2',color: Colors.white),
+              style:
+                  TextStyle(fontFamily: 'BalooBhaijaan2', color: Colors.white),
             ),
           ),
         ],
