@@ -301,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Row(
               children: [
                 Container(
-                  width: 109,
+                  width: 69,
                   height: 90,
                   decoration: BoxDecoration(
                     color: const Color(0xFF003AB6),
@@ -309,13 +309,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: Center(
                     child: imagePath.isNotEmpty
-                        ? Image.asset(imagePath,
-                            width: 100, height: 90) // عرض الصورة
-                        : const Icon(Icons.volume_up,
-                            color: Colors.white,
-                            size: 40), // في حال لم توجد صورة
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12), // تعيين الزوايا لتكون دائرية
+                      child: Image.asset(
+                        imagePath,
+                        width: double.infinity, // تعيين العرض ليتناسب مع الكونتينر
+                        height: double.infinity, // تعيين الارتفاع ليتناسب مع الكونتينر
+                        fit: BoxFit.contain, // لتصغير الصورة داخل الـ Container بدون تشويه
+                      ),
+                    )
+                        : const Icon(
+                      Icons.volume_up,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
                 ),
+
+
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(

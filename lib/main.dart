@@ -78,7 +78,7 @@ class SignLanguageApp extends StatelessWidget {
           ),
         ),
         debugShowCheckedModeBanner: false,
-        home: LoginPage(),
+        home: Welcome1(),
       ),
     );
   }
