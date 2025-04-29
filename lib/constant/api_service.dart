@@ -310,5 +310,38 @@ class ApiService {
     }
   }
 
-  // دالة مساعدة لمعالجة الأخطاء بشكل مرتب
+  static Future<Map<String, dynamic>> resendOtp({required String email}) async {
+    try {
+      final response = await _dio.post(
+        'resend-otp', // مش لازم URL كامل لإنك مجهز baseUrl
+        data: {
+          'email': email, // إرسال الإيميل في البودي
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        return {
+          'error': true,
+          'message': 'Server error: Code ${response.statusCode}',
+        };
+      }
+    } catch (e) {
+      if (e is DioException) {
+        return {
+          'error': true,
+          'message':
+          'DioException: ${e.message} | ${e.response?.data ?? 'No response data'}',
+        };
+      } else {
+        return {
+          'error': true,
+          'message':
+          'Unable to connect. Please check your internet connection.',
+        };
+      }
+    }
+  }
+
 }

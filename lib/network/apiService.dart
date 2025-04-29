@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class Apiservice {
   static const String baseUrl =
-      "https://5935-197-132-247-156.ngrok-free.app/api/";
+      "https://a2e1-197-132-247-156.ngrok-free.app/api/";
 
   final dio = Dio();
   Future<Response> post(String endpoint, Map<String, dynamic> data) async {

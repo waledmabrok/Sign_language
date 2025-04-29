@@ -163,7 +163,9 @@ class _ForgetPasswordState extends State<ForgetPassword> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => VerifyPage()),
+                                            builder: (context) => VerifyPage(
+                                                  email: email,
+                                                )),
                                       );
                                     } else {
                                       if (message.length > 100) {

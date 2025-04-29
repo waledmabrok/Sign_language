@@ -89,11 +89,14 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
     await _engine.leaveChannel();
     await _engine.release();
   }
-
   Future<void> captureAndSend() async {
     screenshotController.capture().then((Uint8List? capturedImage) {
       if (capturedImage != null) {
+        print("✔️ Frame captured successfully");
+        // إرسال الصورة عبر الـ API
         sendImageToServer(capturedImage);
+      } else {
+        print("❌ Failed to capture frame");
       }
     }).catchError((e) {
       print("Error capturing screenshot: $e");
@@ -101,26 +104,26 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
   }
 
   Future<void> sendImageToServer(Uint8List image) async {
-    final uri = Uri.parse('$apiBase/predict');
+    final uri = Uri.parse('https://9d84-197-38-250-98.ngrok-free.app/upload_frame/20d58c60');
     final request = http.MultipartRequest('POST', uri)
-      ..files.add(http.MultipartFile.fromBytes('image', image,
-          filename: 'screenshot.jpg'));
+      ..files.add(http.MultipartFile.fromBytes('frame', image, filename: 'frame.jpg'));
 
     try {
+      print("📤 Sending frame to server...");
       final response = await request.send();
       if (response.statusCode == 200) {
         final result = await response.stream.bytesToString();
-        final jsonResponse = json.decode(result);
-        setState(() {
-          translatedText = jsonResponse['result'] ?? "No translation available";
-        });
+        print("✔️ Image sent successfully: $result");
       } else {
         print("❌ Failed to send image: ${response.statusCode}");
+        final result = await response.stream.bytesToString();
+        print("Error details: $result");
       }
     } catch (e) {
-      print("Error sending image: $e");
+      print("❌ Error sending image: $e");
     }
   }
+
 
   Future<void> startMeetingAndFetchChat() async {
     try {

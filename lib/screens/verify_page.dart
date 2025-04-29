@@ -8,7 +8,8 @@ import '../constant/SnacBar.dart';
 import '../constant/api_service.dart'; // استيراد ApiService
 
 class VerifyPage extends StatefulWidget {
-  const VerifyPage({super.key});
+  final String email;
+  const VerifyPage({super.key, required this.email});
 
   @override
   _VerifyPageState createState() => _VerifyPageState();
@@ -58,6 +59,35 @@ class _VerifyPageState extends State<VerifyPage> {
         MaterialPageRoute(
             builder: (context) => CreatePassword(
                 otpCode: otp)), // الانتقال إلى صفحة إنشاء كلمة المرور
+      );
+    }
+  }
+
+  void resendOtp() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final data =
+        await ApiService.resendOtp(email: widget.email); // نرسل الإيميل
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (data['error'] == true) {
+      showCustomSnackBar(
+        context,
+        message: data['message'] ?? 'An unexpected error occurred',
+        backgroundColor: Colors.red,
+        icon: Icons.error_outline,
+      );
+    } else {
+      showCustomSnackBar(
+        context,
+        message: data['message'] ?? 'A new code has been sent to your email',
+        backgroundColor: Colors.green,
+        icon: Icons.check_circle_outline,
       );
     }
   }
@@ -158,12 +188,7 @@ class _VerifyPageState extends State<VerifyPage> {
                   ),
                 ),
                 InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ForgetPassword()),
-                    );
-                  },
+                  onTap: resendOtp,
                   child: const Text(
                     'Resend ',
                     style: TextStyle(

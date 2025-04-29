@@ -17,6 +17,7 @@ class CreatePassword extends StatefulWidget {
 class _CreatePasswordState extends State<CreatePassword> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
+  bool isLoading = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,55 +87,65 @@ class _CreatePasswordState extends State<CreatePassword> {
               borderRadius: 8,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                if (passwordController.text != confirmPasswordController.text) {
-                  // تحقق من تطابق كلمة المرور
-                  showCustomSnackBar(context,
-                      icon: Icons.error,
-                      message: 'Passwords do not match',
-                      backgroundColor: Colors.yellow);
-                  return;
-                }
+            isLoading
+                ? Center(
+                    child: const CircularProgressIndicator(
+                        color: Color(0xff0051FF)),
+                  ) // عرض مؤشر التحميل
+                : ElevatedButton(
+                    onPressed: () async {
+                      if (passwordController.text !=
+                          confirmPasswordController.text) {
+                        // تحقق من تطابق كلمة المرور
+                        showCustomSnackBar(context,
+                            icon: Icons.error,
+                            message: 'Passwords do not match',
+                            backgroundColor: Colors.yellow);
+                        return;
+                      }
+                      setState(() {
+                        isLoading = true; // تفعيل حالة التحميل
+                      });
+                      final response = await ApiService.resetPassword(
+                        code: widget
+                            .otpCode, // استخدم الكود المرسل من صفحة VerifyPage
+                        password: passwordController.text,
+                        passwordConfirmation: confirmPasswordController.text,
+                      );
+                      setState(() {
+                        isLoading = false; // إيقاف حالة التحميل بعد استلام الرد
+                      });
+                      if (response['error'] == true) {
+                        showCustomSnackBar(context,
+                            icon: Icons.error,
+                            message: "erorr code is valid",
+                            backgroundColor: Colors.red);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginPage()),
+                        );
+                      } // ✅ تصحيح المسار إلى صفحة التسجيل
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff0051FF),
+                      padding: const EdgeInsets.all(10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
 
-                final response = await ApiService.resetPassword(
-                  code:
-                      widget.otpCode, // استخدم الكود المرسل من صفحة VerifyPage
-                  password: passwordController.text,
-                  passwordConfirmation: confirmPasswordController.text,
-                );
-
-                if (response['error'] == true) {
-                  showCustomSnackBar(context,
-                      icon: Icons.error,
-                      message: "erorr code is valid",
-                      backgroundColor: Colors.red);
-                } else {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                } // ✅ تصحيح المسار إلى صفحة التسجيل
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff0051FF),
-                padding: const EdgeInsets.all(10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-
-                  // ✅ استدارة الزر
-                ),
-                minimumSize: const Size(double.infinity, 10),
-              ),
-              child: const Text(
-                "Save",
-                style: TextStyle(
-                    color: Color(0xffE9E9E9),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
-                // ✅ تغيير النص ليعبر عن الانتقال إلى التسجيل
-              ),
-            ),
+                        // ✅ استدارة الزر
+                      ),
+                      minimumSize: const Size(double.infinity, 10),
+                    ),
+                    child: const Text(
+                      "Save",
+                      style: TextStyle(
+                          color: Color(0xffE9E9E9),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
+                      // ✅ تغيير النص ليعبر عن الانتقال إلى التسجيل
+                    ),
+                  ),
           ],
         ),
       ),
