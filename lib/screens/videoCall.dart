@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:screenshot/screenshot.dart';
+import '../constant/api_Ai.dart';
 import '../constant/constant.dart';
+import '../constant/translation_notifier.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -23,130 +25,46 @@ class _MyHomePageState extends State<MyHomePage> {
   String meetingId = "";
   List<Map<String, dynamic>> messages = [];
   final TextEditingController messageController = TextEditingController();
-  String translatedText = "a";
+  String translatedText = "";
   final screenshotController = ScreenshotController();
-
+  String? userAvatar;
   @override
   void initState() {
+    print("meetingId==========================================${meetingId}");
     super.initState();
     initAgora();
-
-    startMeetingAndFetchChat();
+    ApiAI.startMeeting(
+      onMeetingStarted: (id) {
+        setState(() => meetingId = id);
+      },
+      onMessagesUpdated: (msgs) {
+        setState(() => messages = msgs);
+      },
+      onTranslationUpdated: (text) {
+        final cleanedText =
+            text.trim(); // إزالة المسافات الزائدة من البداية والنهاية
+        if (cleanedText.isNotEmpty) {
+          setState(() =>
+              translatedText += '${translatedText.trim()} $cleanedText'.trim());
+        }
+      },
+    );
     print("meeting id=======$meetingId");
   }
 
   @override
   void dispose() {
     _dispose();
+    ApiAI.stopUpdates();
+    messageController.dispose();
     super.dispose();
-  }
-
-  Future<void> captureAndSend() async {
-    screenshotController.capture().then((Uint8List? capturedImage) {
-      if (capturedImage != null) {
-        sendImageToServer(capturedImage); // إرسال الصورة إلى السيرفر
-      }
-    }).catchError((e) {
-      print("Error capturing screenshot: $e");
-    });
-  }
-
-  Future<void> sendImageToServer(Uint8List image) async {
-    final uri = Uri.parse('$apiBase/predict');
-    final request = http.MultipartRequest('POST', uri)
-      ..files.add(http.MultipartFile.fromBytes('image', image,
-          filename: 'screenshot.jpg'));
-
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        final result = await response.stream.bytesToString();
-        final jsonResponse = json.decode(result);
-        setState(() {
-          translatedText = jsonResponse['result'] ?? "No translation available";
-        });
-      } else {
-        print("❌ Failed to send image: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error sending image: $e");
-    }
-  }
-
-  Future<void> fetchTranslation() async {
-    if (meetingId.isEmpty) return;
-    final response = await http.get(Uri.parse("$apiBase/translate/$meetingId"));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        translatedText = data['text'] ?? "";
-      });
-    } else {
-      print("❌ Failed to fetch translation: ${response.statusCode}");
-    }
-  }
-
-  Future<void> startMeetingAndFetchChat() async {
-    try {
-      final startResponse = await http.post(
-        Uri.parse("$apiBase/start_meeting_all"),
-      );
-
-      if (startResponse.statusCode == 200) {
-        final response = await http.get(
-          Uri.parse("$apiBase/last_used_meeting"),
-        );
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          setState(() {
-            meetingId = data['meeting_id'];
-          });
-          print("✅ meeting id from server: $meetingId");
-          fetchMessages();
-          fetchTranslation();
-          Timer.periodic(const Duration(seconds: 3), (_) {
-            fetchMessages();
-            fetchTranslation();
-            captureAndSend();
-          });
-        } else {
-          print("❌ Failed to get meeting ID: ${response.statusCode}");
-        }
-      } else {
-        print("❌ Failed to start meeting: ${startResponse.statusCode}");
-      }
-    } catch (e) {
-      print("❌ Error during startMeetingAndFetchChat: $e");
-    }
-  }
-
-  Future<void> fetchMessages() async {
-    final response = await http.get(Uri.parse("$apiBase/chat/$meetingId"));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      setState(() {
-        messages = data
-            .map(
-              (msg) => {
-                "user": msg["user"] ?? "",
-                "message": msg["message"] ?? "",
-              },
-            )
-            .toList();
-      });
-    }
   }
 
   Future<void> sendMessage() async {
     final msg = messageController.text.trim();
     if (msg.isEmpty) return;
-    await http.post(
-      Uri.parse("$apiBase/chat/$meetingId"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode({"user": "waled", "message": msg}),
-    );
+    await ApiAI.sendMessage(msg);
     messageController.clear();
-    fetchMessages();
   }
 
   Future<void> initAgora() async {
@@ -309,45 +227,50 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: Center(
                     child: imagePath.isNotEmpty
-                        ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12), // تعيين الزوايا لتكون دائرية
-                      child: Image.asset(
-                        imagePath,
-                        width: double.infinity, // تعيين العرض ليتناسب مع الكونتينر
-                        height: double.infinity, // تعيين الارتفاع ليتناسب مع الكونتينر
-                        fit: BoxFit.contain, // لتصغير الصورة داخل الـ Container بدون تشويه
-                      ),
-                    )
-                        : const Icon(
-                      Icons.volume_up,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+                        ? Container(
+                            width: double.infinity,
+                            height: 90,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  12), // تعيين الزوايا لتكون دائرية
+                              child: Image.asset(
+                                imagePath,
+
+                                width: double
+                                    .infinity, // تعيين العرض ليتناسب مع الكونتينر
+                                height: double
+                                    .infinity, // تعيين الارتفاع ليتناسب مع الكونتينر
+                                fit: BoxFit.cover,
+                                // لتصغير الصورة داخل الـ Container بدون تشويه
+                              ),
+                            ),
+                          )
+                        : Container(),
                   ),
                 ),
-
-
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
+                    padding: EdgeInsets.all(8),
                     height: 90,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Text(
-                        translatedText.isNotEmpty
-                            ? translatedText
-                            : "Waiting for translation...",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
+                        child: Text(
+                      translatedText.isNotEmpty
+                          ? translatedText
+                          : "Waiting for translation...",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
                       ),
-                    ),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    )),
                   ),
                 ),
               ],
@@ -356,45 +279,109 @@ class _MyHomePageState extends State<MyHomePage> {
 
           // ✅ Chat messages
           Positioned(
-            bottom: 70,
+            bottom: 20,
             left: 16,
             right: 16,
             top: 390,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.only(
+                left: 12,
+                right: 12,
+              ),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
+                color: Color(0xffD9D9D9),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ListView.builder(
-                reverse: true,
-                itemCount: messages.length,
-                itemBuilder: (_, index) {
-                  final msg = messages[messages.length - index - 1];
-                  final isMe = msg['user'] == "أنا";
-                  return Align(
-                    alignment:
-                        isMe ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE7E7E7),
-                        borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 45.0),
+                child: ListView.builder(
+                  padding: EdgeInsets.only(top: 16, bottom: 16),
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (_, index) {
+                    final msg = messages[messages.length - index - 1];
+                    final isMe = msg['user'] ==
+                        "waled"; // إذا كانت الرسالة من المستخدم الحالي
+                    return Align(
+                      alignment:
+                          isMe ? Alignment.centerLeft : Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: isMe
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.end,
+                        children: isMe
+                            ? [
+                                // الصورة من SharedPreferences
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFF6797FF),
+                                  backgroundImage:
+                                      AssetImage("assets/images/emagechat.png"),
+                                ),
+
+                                // الرسالة
+                                const SizedBox(width: 8),
+                                Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE7E7E7),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "${msg['message']}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            : [
+                                // الصورة من SharedPreferences
+
+                                // الرسالة
+                                Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    "${msg['message']}",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFF6797FF),
+                                  backgroundImage:
+                                      AssetImage("assets/images/emagechat.png"),
+                                ),
+                              ],
                       ),
-                      child: Text("${msg['user']}: ${msg['message']}"),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
           ),
 
           // ✅ Text input
           Positioned(
-            bottom: 10,
-            left: 16,
-            right: 16,
+            bottom: 30,
+            left: 24,
+            right: 24,
             child: Row(
               children: [
                 Expanded(
@@ -413,9 +400,18 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.white),
-                  onPressed: sendMessage,
+                const SizedBox(width: 16),
+                Container(
+                  height: 40,
+                  width: 49,
+                  decoration: BoxDecoration(
+                    color: Color(0xFF0051FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white, size: 24),
+                    onPressed: sendMessage,
+                  ),
                 ),
               ],
             ),

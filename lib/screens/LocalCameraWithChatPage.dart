@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:screenshot/screenshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constant/constant.dart';
+import '../constant/translation_notifier.dart';
 
 class LocalCameraWithChatPage extends StatefulWidget {
   const LocalCameraWithChatPage({super.key});
@@ -89,41 +93,62 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
     await _engine.leaveChannel();
     await _engine.release();
   }
+
   Future<void> captureAndSend() async {
-    screenshotController.capture().then((Uint8List? capturedImage) {
-      if (capturedImage != null) {
-        print("✔️ Frame captured successfully");
-        // إرسال الصورة عبر الـ API
-        sendImageToServer(capturedImage);
-      } else {
-        print("❌ Failed to capture frame");
+    if (!localUserJoined) {
+      print("⏳ Waiting for user to join before capturing...");
+      return;
+    }
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/snapshot.jpg';
+      print("Temporary directory: ${tempDir.path}");
+
+      await _engine.takeSnapshot(
+        uid: 0,
+        filePath: filePath,
+      );
+
+      final bytes = await File(filePath).readAsBytes();
+      final translation = await sendImageToServer(bytes);
+
+      if (translation != null && translation.isNotEmpty) {
+        print("📥 Translation received: $translation");
+        /*   setState(() {
+          translatedText += "$translation";
+        });*/
+        globalTranslation.value += "$translation";
       }
-    }).catchError((e) {
-      print("Error capturing screenshot: $e");
-    });
+    } catch (e) {
+      print("❌ Failed to capture snapshot: $e");
+    }
   }
 
-  Future<void> sendImageToServer(Uint8List image) async {
-    final uri = Uri.parse('https://9d84-197-38-250-98.ngrok-free.app/upload_frame/20d58c60');
+  Future<String?> sendImageToServer(Uint8List image) async {
+    final uri = Uri.parse('$apiBase/upload_frame');
     final request = http.MultipartRequest('POST', uri)
-      ..files.add(http.MultipartFile.fromBytes('frame', image, filename: 'frame.jpg'));
+      ..files.add(
+          http.MultipartFile.fromBytes('frame', image, filename: 'frame.jpg'));
 
     try {
       print("📤 Sending frame to server...");
       final response = await request.send();
+      final result = await response.stream.bytesToString();
       if (response.statusCode == 200) {
-        final result = await response.stream.bytesToString();
         print("✔️ Image sent successfully: $result");
+        final decoded = jsonDecode(result);
+        return decoded['translation'];
       } else {
         print("❌ Failed to send image: ${response.statusCode}");
-        final result = await response.stream.bytesToString();
         print("Error details: $result");
+        return null;
       }
     } catch (e) {
       print("❌ Error sending image: $e");
+      return null;
     }
   }
-
 
   Future<void> startMeetingAndFetchChat() async {
     try {
@@ -142,7 +167,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
           fetchTranslation();
           Timer.periodic(const Duration(seconds: 3), (_) {
             fetchMessages();
-            fetchTranslation();
+            // fetchTranslation();
             captureAndSend();
           });
         } else {
@@ -193,7 +218,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
     await http.post(
       Uri.parse("$apiBase/chat/$meetingId"),
       headers: {"Content-Type": "application/json"},
-      body: json.encode({"user": "waled", "message": msg}),
+      body: json.encode({"user": "ahmed", "message": msg}),
     );
     messageController.clear();
     fetchMessages();
@@ -254,22 +279,30 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
               children: [
                 Expanded(
                   child: Container(
+                    padding: EdgeInsets.all(8),
                     height: 90,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Text(
-                        translatedText.isNotEmpty
-                            ? translatedText
-                            : "Waiting for translation...",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
+                      child: ValueListenableBuilder<String>(
+                        valueListenable: globalTranslation,
+                        builder: (context, value, _) {
+                          return Text(
+                            value.isNotEmpty
+                                ? value
+                                : "Waiting for translation...",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -302,18 +335,29 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                   itemBuilder: (_, index) {
                     final msg = messages[messages.length - index - 1];
                     final isMe = msg['user'] ==
-                        "هو"; // إذا كانت الرسالة من المستخدم الحالي
+                        "waled"; // إذا كانت الرسالة من المستخدم الحالي
                     return Align(
                       alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          isMe ? Alignment.centerLeft : Alignment.centerRight,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: isMe
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.end,
                         children: isMe
                             ? [
+                                // الصورة من SharedPreferences
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFF6797FF),
+                                  backgroundImage: userAvatar != null &&
+                                          userAvatar!.isNotEmpty
+                                      ? NetworkImage(
+                                          userAvatar!) // استخدم الصورة المخزنة
+                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
+                                ),
                                 // الرسالة
+                                const SizedBox(width: 8),
                                 Container(
                                   margin:
                                       const EdgeInsets.symmetric(vertical: 4),
@@ -331,30 +375,10 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                // الصورة من SharedPreferences
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: const Color(0xFF6797FF),
-                                  backgroundImage: userAvatar != null &&
-                                          userAvatar!.isNotEmpty
-                                      ? NetworkImage(
-                                          userAvatar!) // استخدم الصورة المخزنة
-                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
-                                ),
                               ]
                             : [
                                 // الصورة من SharedPreferences
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: const Color(0xFF6797FF),
-                                  backgroundImage: userAvatar != null &&
-                                          userAvatar!.isNotEmpty
-                                      ? NetworkImage(
-                                          userAvatar!) // استخدم الصورة المخزنة
-                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
-                                ),
-                                const SizedBox(width: 8),
+
                                 // الرسالة
                                 Container(
                                   margin:
@@ -372,6 +396,16 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
+                                ),
+                                const SizedBox(width: 8),
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: const Color(0xFF6797FF),
+                                  backgroundImage: userAvatar != null &&
+                                          userAvatar!.isNotEmpty
+                                      ? NetworkImage(
+                                          userAvatar!) // استخدم الصورة المخزنة
+                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
                                 ),
                               ],
                       ),

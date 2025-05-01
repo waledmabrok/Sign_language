@@ -23,6 +23,9 @@ class _CreatePasswordState extends State<CreatePassword> {
     return Scaffold(
       backgroundColor: const Color(0xFFE8E8E8),
       appBar: AppBar(
+        toolbarHeight: 30,
+        automaticallyImplyLeading: false,
+        forceMaterialTransparency: true,
         elevation: 0,
         backgroundColor: const Color(0xFFE8E8E8),
         leading: IconButton(
@@ -36,25 +39,22 @@ class _CreatePasswordState extends State<CreatePassword> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Center(
-                child: Text(
-                  'Hand Dialogue',
-                  style: TextStyle(
-                    color: Color(0xff0051FF),
-                    fontSize: 24,
-                    fontFamily: 'Pacifico',
-                    fontWeight: FontWeight.bold,
-                  ),
+            Center(
+              child: Text(
+                'Hand Dialogue',
+                style: TextStyle(
+                  color: Color(0xff0051FF),
+                  fontSize: 24,
+                  fontFamily: 'Pacifico',
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(

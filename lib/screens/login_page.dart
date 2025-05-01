@@ -139,32 +139,34 @@ class LoginPage extends StatelessWidget {
                           color: Colorss.mainColor,
                         ))
                       : ElevatedButton(
-                          onPressed: () {    if (emailcontroller.text.isEmpty) {
-                            showCustomSnackBar(
-                              context,
-                              message: "Please enter your email.",
-                              backgroundColor: Colors.red,
-                            );
-                            return;
-                          }
+                          onPressed: () {
+                            if (emailcontroller.text.isEmpty) {
+                              showCustomSnackBar(
+                                context,
+                                message: "Please enter your email.",
+                                backgroundColor: Colors.red,
+                              );
+                              return;
+                            }
 
-                          if (passwordcontroller.text.isEmpty) {
-                            showCustomSnackBar(
-                              context,
-                              message: "Please enter a password.",
-                              backgroundColor: Colors.red,
-                            );
-                            return;
-                          }
-                          if (!EmailValidator.validate(emailcontroller.text)) {
-                            showCustomSnackBar(
-                              context,
-                              message: 'Please enter a valid email address.',
-                              backgroundColor: Colors.red,
-                            );
-                            return;
-                          }
-                          BlocProvider.of<LoginCubit>(context).login(
+                            if (passwordcontroller.text.isEmpty) {
+                              showCustomSnackBar(
+                                context,
+                                message: "Please enter a password.",
+                                backgroundColor: Colors.red,
+                              );
+                              return;
+                            }
+                            if (!EmailValidator.validate(
+                                emailcontroller.text)) {
+                              showCustomSnackBar(
+                                context,
+                                message: 'Please enter a valid email address.',
+                                backgroundColor: Colors.red,
+                              );
+                              return;
+                            }
+                            BlocProvider.of<LoginCubit>(context).login(
                               emailcontroller.text,
                               passwordcontroller.text,
                             );
