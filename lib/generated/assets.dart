@@ -6,9 +6,9 @@ class Assets {
   static const String fontsPacificoRegular = 'assets/fonts/Pacifico-Regular.ttf';
   static const String imagesFacebook = 'assets/images/facebook.png';
   static const String imagesFrame = 'assets/images/Frame.png';
-  static const String imagesFrame 494 = 'assets/images/Frame 494.png';
+  static const String imagesFrame_494 = 'assets/images/Frame_494.png';
   static const String imagesFrame2 = 'assets/images/Frame2.png';
-  static const String imagesHand Dialogue = 'assets/images/Hand Dialogue.png';
+  static const String imagesHand_Dialogue = 'assets/images/Hand Dialogue.png';
   static const String imagesIcons8Google48 = 'assets/images/icons8-google-48.png';
   static const String imagesImagea = 'assets/images/imagea.png';
   static const String imagesImageb = 'assets/images/imageb.png';
@@ -37,8 +37,8 @@ class Assets {
   static const String imagesImagex = 'assets/images/imagex.png';
   static const String imagesImagey = 'assets/images/imagey.png';
   static const String imagesImagez = 'assets/images/imagez.png';
-  static const String imagesRectangle 49 = 'assets/images/Rectangle 49.png';
-  static const String imagesRectangle 6 = 'assets/images/Rectangle 6.png';
+  static const String imagesRectangle_49 = 'assets/images/Rectangle 49.png';
+  static const String imagesRectangle_6 = 'assets/images/Rectangle 6.png';
   static const String imagesSignin = 'assets/images/signin.png';
   static const String imagesSignup = 'assets/images/signup.png';
   static const String imagesSplash = 'assets/images/Splash.png';

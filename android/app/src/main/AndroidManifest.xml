@@ -7,7 +7,7 @@
 
 
     <application
-        android:label="flutter_application"
+        android:label="Hand Dialogue"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application/screens/meeting_page.dart';
+
 import 'package:flutter_application/widgets/custom_text_field.dart';
 import 'package:flutter_application/widgets/date&time.dart';
 import 'package:flutter_application/widgets/header_meeting.dart';
@@ -234,7 +234,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
                               ),
                             ),
                             onPressed: () {
-                              print('CANCEL MEETING CLICKED');
+                              Navigator.pop(context);
                             },
                             child: const Text(
                               'CANCEL',

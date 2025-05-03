@@ -107,7 +107,7 @@ class _JoinMeetingState extends State<JoinMeeting> {
                           ),
                         ),
                         onPressed: () {
-                          print('CANCEL MEETING CLICKED');
+                          Navigator.pop(context);
                         },
                         child: const Text(
                           'CANCEL',

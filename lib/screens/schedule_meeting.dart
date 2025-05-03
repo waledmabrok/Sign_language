@@ -5,6 +5,8 @@ import 'package:flutter_application/widgets/header_meeting.dart';
 import 'package:flutter_application/widgets/video.dart';
 import 'package:intl/intl.dart';
 
+import '../constant/SnacBar.dart';
+
 class ScheduleMeeting extends StatefulWidget {
   final String title;
   const ScheduleMeeting({super.key, required this.title});
@@ -193,7 +195,7 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                               ),
                             ),
                             onPressed: () {
-                              print('CANCEL MEETING CLICKED');
+                              Navigator.pop(context);
                             },
                             child: const Text(
                               'CANCEL',
@@ -219,7 +221,10 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                               ),
                             ),
                             onPressed: () {
-                              print('START MEETING CLICKED');
+                              showCustomSnackBar(context, message: 'Success', backgroundColor: Colors.green);
+                              Future.delayed(const Duration(seconds: 1), () {
+                                Navigator.pop(context);
+                              });
                             },
                             child: const Text(
                               'Start Meeting',
