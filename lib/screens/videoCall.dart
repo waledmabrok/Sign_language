@@ -41,11 +41,10 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() => messages = msgs);
       },
       onTranslationUpdated: (text) {
-        final cleanedText =
-            text.trim(); // إزالة المسافات الزائدة من البداية والنهاية
-        if (cleanedText.isNotEmpty) {
-          setState(() =>
-              translatedText += '${translatedText.trim()} $cleanedText'.trim());
+        if (text.isNotEmpty) {
+          setState(() {
+            translatedText += " $text";
+          });
         }
       },
     );

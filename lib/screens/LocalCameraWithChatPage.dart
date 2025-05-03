@@ -350,11 +350,8 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                                 CircleAvatar(
                                   radius: 16,
                                   backgroundColor: const Color(0xFF6797FF),
-                                  backgroundImage: userAvatar != null &&
-                                          userAvatar!.isNotEmpty
-                                      ? NetworkImage(
-                                          userAvatar!) // استخدم الصورة المخزنة
-                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
+                                  backgroundImage:
+                                      AssetImage("assets/images/emagechat.png"),
                                 ),
                                 // الرسالة
                                 const SizedBox(width: 8),
@@ -401,11 +398,8 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                                 CircleAvatar(
                                   radius: 16,
                                   backgroundColor: const Color(0xFF6797FF),
-                                  backgroundImage: userAvatar != null &&
-                                          userAvatar!.isNotEmpty
-                                      ? NetworkImage(
-                                          userAvatar!) // استخدم الصورة المخزنة
-                                      : null, // أو صورة افتراضية لو الصورة مش موجودة
+                                  backgroundImage:
+                                      AssetImage("assets/images/emagechat.png"),
                                 ),
                               ],
                       ),
