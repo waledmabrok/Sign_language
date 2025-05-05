@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:camera/camera.dart';
+
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,7 +31,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
   String translatedText = "";
   final screenshotController = ScreenshotController();
   String? userAvatar;
-
+  bool isCapturing = false;
   @override
   void initState() {
     super.initState();
@@ -95,11 +95,11 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
   }
 
   Future<void> captureAndSend() async {
-    if (!localUserJoined) {
+    if (!localUserJoined || isCapturing) {
       print("⏳ Waiting for user to join before capturing...");
       return;
     }
-
+    isCapturing = true;
     try {
       final tempDir = await getTemporaryDirectory();
       final filePath = '${tempDir.path}/snapshot.jpg';
@@ -122,6 +122,8 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
       }
     } catch (e) {
       print("❌ Failed to capture snapshot: $e");
+    } finally {
+      isCapturing = false;
     }
   }
 
@@ -165,7 +167,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
           });
           fetchMessages();
           fetchTranslation();
-          Timer.periodic(const Duration(seconds: 3), (_) {
+          Timer.periodic(const Duration(seconds: 5), (_) {
             fetchMessages();
             // fetchTranslation();
             captureAndSend();
@@ -203,7 +205,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
 
   Future<void> fetchTranslation() async {
     if (meetingId.isEmpty) return;
-    final response = await http.get(Uri.parse("$apiBase/translate/$meetingId"));
+    final response = await http.get(Uri.parse("$apiBase/latest_translation"));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
