@@ -206,7 +206,7 @@ class LoginPage extends StatelessWidget {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SignupPage()));
+                              builder: (context) => HomePage() /*SignupPage*/));
                       // ✅ تصحيح المسار إلى صفحة التسجيل
                     },
                     child: const Text(
