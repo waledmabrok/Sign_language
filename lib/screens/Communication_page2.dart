@@ -21,6 +21,13 @@ class _Comunucation2State extends State<Comunucation2> {
         controllerAgoraChannel.text.isNotEmpty &&
         controllerChatId.text.isNotEmpty;
   }
+  @override
+  void initState() {
+    super.initState();
+    controllerChatId.text = "7e4fbc40";
+ controllerMeeting..text = "7e4fbc40";
+    controllerAgoraChannel..text="Signal";
+  }
 
   @override
   Widget build(BuildContext context) {

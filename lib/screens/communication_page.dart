@@ -43,7 +43,11 @@ class _CommunicationPageState extends State<CommunicationPage> {
             selectedTimeZone !=
                 null; // تحقق من حالة التبديل إذا كانت ضرورية في التطبيق
   }
-
+  @override
+  void initState() {
+    super.initState();
+    controllerMeetingTitle.text = "Team Weekly Sync"; // أو أي قيمة مبدئية
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,7 +88,7 @@ class _CommunicationPageState extends State<CommunicationPage> {
                 ),
                 Padding(
                   padding: EdgeInsetsDirectional.only(start: 16, end: 16),
-                  child: HeaderMeeting(
+                  child: HeaderMeeting( controller: controllerMeetingTitle,
                     title: 'Start New Meeting',
                     nameTextField: 'Meeting Title',
                     hintTextField: 'Enter meeting title (Optional)',

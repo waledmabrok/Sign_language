@@ -28,10 +28,17 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
     'Room 9',
     'Room 10',
   ];
+
   String? selectRoom;
   TextEditingController controllerDescription = TextEditingController();
+  TextEditingController controllerMeetingTitle =
+  TextEditingController();
 // حالة التبديل
-
+  @override
+  void initState() {
+    super.initState();
+    controllerMeetingTitle.text = "Team Weekly Sync"; // أو أي قيمة مبدئية
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,7 +80,7 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: HeaderMeeting(
+                  child: HeaderMeeting( controller: controllerMeetingTitle,
                     needDescription: false,
                     title: 'Schedule Your Meeting',
                     nameTextField: 'Meeting Name',
