@@ -4,16 +4,16 @@ class Assets {
 
   static const String fontsCrimsonTextRegular = 'assets/fonts/CrimsonText-Regular.ttf';
   static const String fontsPacificoRegular = 'assets/fonts/Pacifico-Regular.ttf';
+  static const String imagesEmagechat = 'assets/images/emagechat.png';
   static const String imagesFacebook = 'assets/images/facebook.png';
   static const String imagesFrame = 'assets/images/Frame.png';
-  static const String imagesFrame_494 = 'assets/images/Frame_494.png';
+  static const String imagesFrame 494 = 'assets/images/Frame 494.png';
   static const String imagesFrame2 = 'assets/images/Frame2.png';
-  static const String imagesHand_Dialogue = 'assets/images/Hand Dialogue.png';
+  static const String imagesHand Dialogue = 'assets/images/Hand Dialogue.png';
   static const String imagesIcons8Google48 = 'assets/images/icons8-google-48.png';
   static const String imagesImagea = 'assets/images/imagea.png';
   static const String imagesImageb = 'assets/images/imageb.png';
   static const String imagesImagec = 'assets/images/imagec.png';
-  static const String imagesImagechat = 'assets/images/emagechat.png';
   static const String imagesImaged = 'assets/images/imaged.png';
   static const String imagesImagee = 'assets/images/imagee.png';
   static const String imagesImagef = 'assets/images/imagef.png';
@@ -37,13 +37,14 @@ class Assets {
   static const String imagesImagex = 'assets/images/imagex.png';
   static const String imagesImagey = 'assets/images/imagey.png';
   static const String imagesImagez = 'assets/images/imagez.png';
-  static const String imagesRectangle_49 = 'assets/images/Rectangle 49.png';
-  static const String imagesRectangle_6 = 'assets/images/Rectangle 6.png';
+  static const String imagesRectangle 49 = 'assets/images/Rectangle 49.png';
+  static const String imagesRectangle 6 = 'assets/images/Rectangle 6.png';
   static const String imagesSignin = 'assets/images/signin.png';
   static const String imagesSignup = 'assets/images/signup.png';
   static const String imagesSplash = 'assets/images/Splash.png';
   static const String navbarAdd = 'assets/navbar/add.svg';
   static const String navbarCalender = 'assets/navbar/calender.svg';
+  static const String navbarCopy = 'assets/navbar/copy.svg';
   static const String navbarEditProfile = 'assets/navbar/editProfile.svg';
   static const String navbarHome2SvgrepoCom = 'assets/navbar/home-2-svgrepo-com.svg';
   static const String navbarImage = 'assets/navbar/image.svg';

@@ -20,10 +20,19 @@ class _JoinMeetingState extends State<JoinMeeting> {
 
   void _startMeeting() {
     if (meetingIdController.text.isEmpty) {
-      showCustomSnackBar(context,
-          icon: Icons.error_outline,
-          message: 'Please enter a Meeting ID',
-          backgroundColor: Colors.red);
+      showCustomSnackBar(
+        context,
+        icon: Icons.error_outline,
+        message: 'Please enter a Meeting ID',
+        backgroundColor: Colors.red,
+      );
+    } else if (meetingIdController.text.trim() != "7e4fbc40") {
+      showCustomSnackBar(
+        context,
+        icon: Icons.error_outline,
+        message: 'Invalid Meeting ID',
+        backgroundColor: Colors.red,
+      );
     } else {
       Navigator.push(
         context,
@@ -33,10 +42,10 @@ class _JoinMeetingState extends State<JoinMeeting> {
       );
     }
   }
+
   @override
   void initState() {
     super.initState();
-    meetingIdController.text = "7e4fbc40";
   }
 
   @override

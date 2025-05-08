@@ -21,12 +21,13 @@ class _Comunucation2State extends State<Comunucation2> {
         controllerAgoraChannel.text.isNotEmpty &&
         controllerChatId.text.isNotEmpty;
   }
+
   @override
   void initState() {
     super.initState();
     controllerChatId.text = "7e4fbc40";
- controllerMeeting..text = "7e4fbc40";
-    controllerAgoraChannel..text="Signal";
+    controllerMeeting..text = "7e4fbc40";
+    controllerAgoraChannel..text = "Signal";
   }
 
   @override
@@ -83,6 +84,7 @@ class _Comunucation2State extends State<Comunucation2> {
               Padding(
                 padding: EdgeInsetsDirectional.only(start: 16.0, end: 16),
                 child: CustomTextField(
+                  showCopyIcon: true,
                   hintText: "7e4fbc40",
                   borderRadius: 20,
                   controller: controllerMeeting,

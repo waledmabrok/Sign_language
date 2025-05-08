@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../constant/SnacBar.dart';
 
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -8,6 +11,7 @@ class CustomTextField extends StatefulWidget {
   final Function()? onTap;
   final bool? isReadOnly;
   final bool isPassword;
+  final bool showCopyIcon;
 
   const CustomTextField({
     super.key,
@@ -18,6 +22,7 @@ class CustomTextField extends StatefulWidget {
     this.onTap,
     this.isReadOnly,
     this.isPassword = false,
+    this.showCopyIcon = false,
   });
 
   @override
@@ -35,19 +40,32 @@ class _CustomTextFieldState extends State<CustomTextField> {
       controller: widget.controller,
       obscureText: widget.isPassword ? _isObscure : false,
       decoration: InputDecoration(
-        suffixIcon: widget.isPassword
+        suffixIcon: widget.showCopyIcon
             ? IconButton(
-                icon: Icon(
-                  _isObscure ? Icons.visibility_off : Icons.visibility,
-                  color: Color(0xff939393),
-                ),
+                icon: Icon(Icons.copy, color: Colors.black),
                 onPressed: () {
-                  setState(() {
-                    _isObscure = !_isObscure;
-                  });
+                  Clipboard.setData(
+                      ClipboardData(text: widget.controller.text));
+                  showCustomSnackBar(context,
+                      message: "تم النسخ", backgroundColor: Colors.green);
+                  /*   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("تم النسخ")),
+                  );*/
                 },
               )
-            : (widget.icon),
+            : widget.isPassword
+                ? IconButton(
+                    icon: Icon(
+                      _isObscure ? Icons.visibility_off : Icons.visibility,
+                      color: Color(0xff939393),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscure = !_isObscure;
+                      });
+                    },
+                  )
+                : (widget.icon),
         hintText: widget.hintText,
         hintStyle: TextStyle(
           color: Color(0xff939393),
