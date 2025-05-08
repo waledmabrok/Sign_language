@@ -167,7 +167,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
           });
           fetchMessages();
           fetchTranslation();
-          Timer.periodic(const Duration(seconds: 5), (_) {
+          Timer.periodic(const Duration(seconds: 3), (_) {
             fetchMessages();
             // fetchTranslation();
             captureAndSend();
