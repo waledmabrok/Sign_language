@@ -31,14 +31,14 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
 
   String? selectRoom;
   TextEditingController controllerDescription = TextEditingController();
-  TextEditingController controllerMeetingTitle =
-  TextEditingController();
+  TextEditingController controllerMeetingTitle = TextEditingController();
 // حالة التبديل
   @override
   void initState() {
     super.initState();
     controllerMeetingTitle.text = "Team Weekly Sync"; // أو أي قيمة مبدئية
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,15 +60,19 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                         Navigator.pop(context);
                       },
                     ),
-                    const Spacer(),
-                    Text(widget.title,
-                        style: const TextStyle(
-                          color: Color(0xff0051FF),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        )),
-                    const Spacer(),
-                    const Spacer(),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          widget.title,
+                          style: const TextStyle(
+                            color: Color(0xff0051FF),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // تعويض عرض الأيقونة تقريبًا
                   ],
                 ),
                 const Divider(
@@ -80,7 +84,8 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: HeaderMeeting( controller: controllerMeetingTitle,
+                  child: HeaderMeeting(
+                    controller: controllerMeetingTitle,
                     needDescription: false,
                     title: 'Schedule Your Meeting',
                     nameTextField: 'Meeting Name',
@@ -228,7 +233,9 @@ class _ScheduleMeetingState extends State<ScheduleMeeting> {
                               ),
                             ),
                             onPressed: () {
-                              showCustomSnackBar(context, message: 'Success', backgroundColor: Colors.green);
+                              showCustomSnackBar(context,
+                                  message: 'Success',
+                                  backgroundColor: Colors.green);
                               Future.delayed(const Duration(seconds: 1), () {
                                 Navigator.pop(context);
                               });

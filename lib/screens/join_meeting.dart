@@ -68,15 +68,20 @@ class _JoinMeetingState extends State<JoinMeeting> {
                       Navigator.pop(context);
                     },
                   ),
-                  const Spacer(),
-                  Text(widget.title,
-                      style: const TextStyle(
-                        color: Color(0xff0051FF),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      )),
-                  const Spacer(),
-                  const Spacer(),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        widget.title,
+                        style: const TextStyle(
+                          color: Color(0xff0051FF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // نفس عرض الأيقونة علشان تتوازن
+                  const SizedBox(width: 48),
                 ],
               ),
               const Divider(

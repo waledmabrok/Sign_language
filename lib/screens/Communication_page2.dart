@@ -50,18 +50,21 @@ class _Comunucation2State extends State<Comunucation2> {
                       Navigator.pop(context);
                     },
                   ),
-                  Spacer(),
-                  Text(
-                    "Communication with hand signal",
-                    style: const TextStyle(
-                      fontFamily: "Inter",
-                      color: Color(0xff0051FF),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "Communication with hand signal",
+                        style: const TextStyle(
+                          fontFamily: "Inter",
+                          color: Color(0xff0051FF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                  Spacer(),
-                  Spacer(),
+                  const SizedBox(width: 48), // عرض تقريبي يساوي عرض الأيقونة
                 ],
               ),
               const Divider(
