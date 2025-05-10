@@ -284,7 +284,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
               // الزر السفلي يمين
               Positioned(
                 top: 220,
-                right: 8,
+                right: 16,
                 child: FloatingActionButton.small(
                   backgroundColor: Colors.red,
                   onPressed: () {
@@ -343,7 +343,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                   ),
 
                   // زرار الحذف في أسفل اليمين
-                  Positioned(
+                  /*  Positioned(
                     bottom: 8,
                     right: 8,
                     child: GestureDetector(
@@ -401,7 +401,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
                               size: 24,
                             ),
                     ),
-                  ),
+                  ),*/
                 ],
               ),
             ),

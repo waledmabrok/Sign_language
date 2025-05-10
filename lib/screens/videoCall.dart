@@ -39,19 +39,22 @@ class _MyHomePageState extends State<MyHomePage> {
     print("meetingId==========================================${meetingId}");
     super.initState();
     initAgora();
-    _startPollingDeleteChar();
+/*    _startPollingDeleteChar();*/
     ApiAI.startMeeting(onMeetingStarted: (id) {
       setState(() => meetingId = id);
     }, onMessagesUpdated: (msgs) {
       setState(() => messages = msgs);
     }, onTranslationUpdated: (text) {
       print("Received translation: $text");
-      if (text.isNotEmpty) {
-        translationWordsNotifier.value = [
-          ...translationWordsNotifier.value,
-          text
-        ];
-      }
+      /*    if (text.isNotEmpty) {
+        // إضافة الترجمة الجديدة مباشرة
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          translationWordsNotifier.value = [
+            ...translationWordsNotifier.value,
+            text,
+          ];
+        });
+      }*/
     });
     print("meeting id=======$meetingId");
   }
@@ -73,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
   }*/
-  void _startPollingDeleteChar() {
+/*  void _startPollingDeleteChar() {
     _pollingTimer = Timer.periodic(Duration(seconds: 5), (_) async {
       try {
         final response = await http.get(Uri.parse('$apiBase/delete_last_char'));
@@ -82,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
         if (jsonResponse['success'] == 'Done') {
           final currentList = translationWordsNotifier.value;
           if (currentList.isNotEmpty) {
+            // إزالة آخر حرف بشكل فوري
             WidgetsBinding.instance.addPostFrameCallback((_) {
               translationWordsNotifier.value = List.from(currentList)
                 ..removeLast();
@@ -92,13 +96,13 @@ class _MyHomePageState extends State<MyHomePage> {
         print("Error in polling delete: $e");
       }
     });
-  }
+  }*/
 
   @override
   void dispose() {
     _dispose();
     translationWordsNotifier.dispose();
-    _pollingTimer?.cancel();
+    /*  _pollingTimer?.cancel();*/
     ApiAI.stopUpdates();
     messageController.dispose();
     super.dispose();
