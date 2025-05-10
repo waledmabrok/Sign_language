@@ -10,7 +10,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import 'package:screenshot/screenshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'home_page.dart';
+import '../constant/SnacBar.dart';
 import '../constant/constant.dart';
 import '../constant/translation_notifier.dart';
 
@@ -32,6 +33,8 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
   final screenshotController = ScreenshotController();
   String? userAvatar;
   bool isCapturing = false;
+  Timer? _periodicTimer;
+  bool isDeleting = false;
   @override
   void initState() {
     super.initState();
@@ -49,6 +52,7 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
 
   @override
   void dispose() {
+    _periodicTimer?.cancel();
     _dispose();
     super.dispose();
   }
@@ -167,9 +171,9 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
           });
           fetchMessages();
           fetchTranslation();
-          Timer.periodic(const Duration(seconds: 3), (_) {
+          _periodicTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+            if (!mounted) return; // تأكد إن الصفحة لسه شغالة
             fetchMessages();
-            // fetchTranslation();
             captureAndSend();
           });
         } else {
@@ -247,29 +251,59 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
           ),
 
           // الكاميرا المحلية
-          Positioned(
-            top: 48,
-            left: 16,
-            right: 16,
-            child: Container(
-              height: 223,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6797FF),
-                borderRadius: BorderRadius.circular(8),
+          Stack(
+            children: [
+              // Positioned بتاع الفيديو
+              Positioned(
+                top: 48,
+                left: 16,
+                right: 16,
+                child: Container(
+                  height: 223,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6797FF),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: localUserJoined
+                        ? AgoraVideoView(
+                            controller: VideoViewController(
+                              rtcEngine: _engine,
+                              canvas: const VideoCanvas(uid: 0),
+                            ),
+                          )
+                        : const Center(
+                            child:
+                                CircularProgressIndicator(color: Colors.white),
+                          ),
+                  ),
+                ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: localUserJoined
-                    ? AgoraVideoView(
-                        controller: VideoViewController(
-                          rtcEngine: _engine,
-                          canvas: const VideoCanvas(uid: 0),
-                        ),
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(color: Colors.white)),
+
+              // الزر السفلي يمين
+              Positioned(
+                top: 220,
+                right: 8,
+                child: FloatingActionButton.small(
+                  backgroundColor: Colors.red,
+                  onPressed: () {
+                    // إيقاف تشغيل الفيديو من Agora (اختياري)
+                    _engine.leaveChannel();
+
+                    // الانتقال إلى الصفحة الرئيسية ومسح كل الصفحات السابقة
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const HomePage()), // غير HomePage بالصفحة الرئيسية
+                      (route) => false,
+                    );
+                  },
+                  child: const Icon(Icons.call_end, color: Colors.white),
+                ),
               ),
-            ),
+            ],
           ),
 
           // الترجمة
@@ -277,39 +311,99 @@ class _LocalCameraWithChatPageState extends State<LocalCameraWithChatPage> {
             top: 285,
             left: 16,
             right: 16,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: ValueListenableBuilder<String>(
-                        valueListenable: globalTranslation,
-                        builder: (context, value, _) {
-                          return Text(
-                            value.isNotEmpty
-                                ? value
-                                : "Waiting for translation...",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
-                      ),
+            child: Container(
+              height: 90,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.all(8),
+              child: Stack(
+                children: [
+                  // النص في المنتصف
+                  Center(
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: globalTranslation,
+                      builder: (context, value, _) {
+                        return Text(
+                          value.isNotEmpty
+                              ? value
+                              : "Waiting for translation...",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
+
+                  // زرار الحذف في أسفل اليمين
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: isDeleting
+                          ? null
+                          : () async {
+                              setState(() {
+                                isDeleting = true;
+                              });
+
+                              try {
+                                final response = await http.post(
+                                  Uri.parse('$apiBase/delete_char'),
+                                );
+                                final jsonResponse = json.decode(response.body);
+                                if (jsonResponse['success'] == 'Done') {
+                                  if (globalTranslation.value.isNotEmpty) {
+                                    globalTranslation.value =
+                                        globalTranslation.value.substring(0,
+                                            globalTranslation.value.length - 1);
+                                  }
+                                  showCustomSnackBar(
+                                    context,
+                                    message: 'Delete Succ',
+                                    backgroundColor: Colors.green,
+                                  );
+                                } else {
+                                  showCustomSnackBar(
+                                    context,
+                                    message: 'Delete Failed',
+                                    backgroundColor: Colors.red,
+                                  );
+                                }
+                              } catch (e) {
+                                showCustomSnackBar(
+                                  context,
+                                  message: 'Internet error',
+                                  backgroundColor: Colors.red,
+                                );
+                              } finally {
+                                setState(() {
+                                  isDeleting = false;
+                                });
+                              }
+                            },
+                      child: isDeleting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(
+                              Icons.backspace_outlined,
+                              color: Colors.black,
+                              size: 24,
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 

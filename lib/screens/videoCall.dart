@@ -9,6 +9,7 @@ import 'package:screenshot/screenshot.dart';
 import '../constant/api_Ai.dart';
 import '../constant/constant.dart';
 import '../constant/translation_notifier.dart';
+import 'home_page.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -26,34 +27,78 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Map<String, dynamic>> messages = [];
   final TextEditingController messageController = TextEditingController();
   String translatedText = "";
+  //String get displayedText => translationWords.join(" ");
+  final ValueNotifier<List<String>> translationWordsNotifier =
+      ValueNotifier([]);
+
   final screenshotController = ScreenshotController();
   String? userAvatar;
+  Timer? _pollingTimer;
   @override
   void initState() {
     print("meetingId==========================================${meetingId}");
     super.initState();
     initAgora();
-    ApiAI.startMeeting(
-      onMeetingStarted: (id) {
-        setState(() => meetingId = id);
-      },
-      onMessagesUpdated: (msgs) {
-        setState(() => messages = msgs);
-      },
-      onTranslationUpdated: (text) {
-        if (text.isNotEmpty) {
-          setState(() {
-            translatedText += " $text";
-          });
-        }
-      },
-    );
+    _startPollingDeleteChar();
+    ApiAI.startMeeting(onMeetingStarted: (id) {
+      setState(() => meetingId = id);
+    }, onMessagesUpdated: (msgs) {
+      setState(() => messages = msgs);
+    }, onTranslationUpdated: (text) {
+      print("Received translation: $text");
+      if (text.isNotEmpty) {
+        translationWordsNotifier.value = [
+          ...translationWordsNotifier.value,
+          text
+        ];
+      }
+    });
     print("meeting id=======$meetingId");
+  }
+
+/*  void _startPollingDeleteChar() {
+    _pollingTimer = Timer.periodic(Duration(seconds: 5), (_) async {
+      try {
+        final response = await http.get(Uri.parse('$apiBase/delete_last_char'));
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse['success'] == 'Done') {
+          if (translationWords.isNotEmpty) {
+            setState(() {
+              translationWords.removeLast();
+            });
+          }
+        }
+      } catch (e) {
+        print("Error in polling delete: $e");
+      }
+    });
+  }*/
+  void _startPollingDeleteChar() {
+    _pollingTimer = Timer.periodic(Duration(seconds: 5), (_) async {
+      try {
+        final response = await http.get(Uri.parse('$apiBase/delete_last_char'));
+        final jsonResponse = json.decode(response.body);
+
+        if (jsonResponse['success'] == 'Done') {
+          final currentList = translationWordsNotifier.value;
+          if (currentList.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              translationWordsNotifier.value = List.from(currentList)
+                ..removeLast();
+            });
+          }
+        }
+      } catch (e) {
+        print("Error in polling delete: $e");
+      }
+    });
   }
 
   @override
   void dispose() {
     _dispose();
+    translationWordsNotifier.dispose();
+    _pollingTimer?.cancel();
     ApiAI.stopUpdates();
     messageController.dispose();
     super.dispose();
@@ -128,14 +173,13 @@ class _MyHomePageState extends State<MyHomePage> {
     // تحقق من أن النص ليس فارغًا
 
 // تحقق من أن النص ليس فارغًا
-    if (translatedText.isNotEmpty) {
-      // الحصول على آخر حرف من النص المترجم (أو الحرف الأخير المدخل)
-      String lastChar = translatedText[translatedText.length - 1].toLowerCase();
-
-      // التأكد من أن الحرف في النطاق من 'a' إلى 'z'
-      if (lastChar.compareTo('a') >= 0 && lastChar.compareTo('z') <= 0) {
-        // بناء مسار الصورة بناءً على الحرف الأخير
-        imagePath = 'assets/images/image${lastChar}.png';
+    if (translationWordsNotifier.value.isNotEmpty) {
+      String lastWord = translationWordsNotifier.value.last;
+      if (lastWord.isNotEmpty) {
+        String lastChar = lastWord[lastWord.length - 1].toLowerCase();
+        if (lastChar.compareTo('a') >= 0 && lastChar.compareTo('z') <= 0) {
+          imagePath = 'assets/images/image${lastChar}.png';
+        }
       }
     }
     return Scaffold(
@@ -146,69 +190,95 @@ class _MyHomePageState extends State<MyHomePage> {
             height: double.infinity,
             color: const Color(0xFF0051FF),
           ),
-          Positioned(
-            top: 48,
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-              ), // المسافة من اليمين والشمال
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 223,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6797FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: localUserJoined
-                            ? AgoraVideoView(
-                                controller: VideoViewController(
-                                  rtcEngine: _engine,
-                                  canvas: const VideoCanvas(uid: 0),
-                                ),
-                              )
-                            : const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xff0051FF),
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 9), // المسافة بين الفيديوهين
-                  Expanded(
-                    child: Container(
-                      height: 223,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6797FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: _remoteUid != null
-                            ? AgoraVideoView(
-                                controller: VideoViewController.remote(
-                                  rtcEngine: _engine,
-                                  canvas: VideoCanvas(uid: _remoteUid),
-                                  connection: const RtcConnection(
-                                    channelId: channel,
+          Stack(
+            children: [
+              // الفيديوهين جنب بعض
+              Positioned(
+                top: 48,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    children: [
+                      // الفيديو المحلي
+                      Expanded(
+                        child: Container(
+                          height: 223,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6797FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: localUserJoined
+                                ? AgoraVideoView(
+                                    controller: VideoViewController(
+                                      rtcEngine: _engine,
+                                      canvas: const VideoCanvas(uid: 0),
+                                    ),
+                                  )
+                                : const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xff0051FF),
+                                    ),
                                   ),
-                                ),
-                              )
-                            : const Center(
-                                child: Text("Waiting for user..."),
-                              ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 9),
+                      // فيديو المستخدم الآخر
+                      Expanded(
+                        child: Container(
+                          height: 223,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6797FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: _remoteUid != null
+                                ? AgoraVideoView(
+                                    controller: VideoViewController.remote(
+                                      rtcEngine: _engine,
+                                      canvas: VideoCanvas(uid: _remoteUid),
+                                      connection: const RtcConnection(
+                                        channelId: channel,
+                                      ),
+                                    ),
+                                  )
+                                : const Center(
+                                    child: Text("Waiting for user..."),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+
+              // زر إنهاء المكالمة بأسفل يمين الشاشة
+              Positioned(
+                top: 220,
+                right: 8,
+                child: FloatingActionButton.small(
+                  backgroundColor: Colors.red,
+                  onPressed: () {
+                    _engine.leaveChannel(); // مغادرة القناة
+
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const HomePage()), // عدل الصفحة حسب مشروعك
+                      (route) => false,
+                    );
+                  },
+                  child: const Icon(Icons.call_end, color: Colors.white),
+                ),
+              ),
+            ],
           ),
 
           Positioned(
@@ -257,19 +327,26 @@ class _MyHomePageState extends State<MyHomePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                        child: Text(
-                      translatedText.isNotEmpty
-                          ? translatedText
-                          : "Waiting for translation...",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                      child: ValueListenableBuilder<List<String>>(
+                        valueListenable: translationWordsNotifier,
+                        builder: (context, words, _) {
+                          final text = words.join(" ");
+                          return Text(
+                            text.isNotEmpty
+                                ? text
+                                : "Waiting for translation...",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
                       ),
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    )),
+                    ),
                   ),
                 ),
               ],

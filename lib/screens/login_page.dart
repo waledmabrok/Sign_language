@@ -11,11 +11,16 @@ import '../constant/SnacBar.dart' show showCustomSnackBar;
 import '../login_cubit/login_state.dart';
 import 'home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   LoginPage({super.key});
 
-  TextEditingController emailcontroller = TextEditingController();
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
+class _LoginPageState extends State<LoginPage> {
+  TextEditingController emailcontroller = TextEditingController();
+  String? errorMessage;
   TextEditingController passwordcontroller = TextEditingController();
 
   @override
@@ -126,67 +131,80 @@ class LoginPage extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const HomePage()),
                     );
                   } else if (state is LoginFailure) {
-                    showCustomSnackBar(context,
-                        icon: Icons.error_outline,
-                        message: 'Erorr !',
-                        backgroundColor: Colors.red);
+                    setState(() {
+                      errorMessage = "Error! Invalid credentials.";
+                    });
                   }
                 },
                 builder: (context, state) {
-                  return state is LoginLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                          color: Colorss.mainColor,
-                        ))
-                      : ElevatedButton(
-                          onPressed: () {
-                            if (emailcontroller.text.isEmpty) {
-                              showCustomSnackBar(
-                                context,
-                                message: "Please enter your email.",
-                                backgroundColor: Colors.red,
-                              );
-                              return;
-                            }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      state is LoginLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                              color: Colorss.mainColor,
+                            ))
+                          : ElevatedButton(
+                              onPressed: () {
+                                setState(() =>
+                                    errorMessage = null); // مسح الرسالة القديمة
 
-                            if (passwordcontroller.text.isEmpty) {
-                              showCustomSnackBar(
-                                context,
-                                message: "Please enter a password.",
-                                backgroundColor: Colors.red,
-                              );
-                              return;
-                            }
-                            if (!EmailValidator.validate(
-                                emailcontroller.text)) {
-                              showCustomSnackBar(
-                                context,
-                                message: 'Please enter a valid email address.',
-                                backgroundColor: Colors.red,
-                              );
-                              return;
-                            }
-                            BlocProvider.of<LoginCubit>(context).login(
-                              emailcontroller.text,
-                              passwordcontroller.text,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xff0051FF),
-                            padding: const EdgeInsets.all(10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                                if (emailcontroller.text.isEmpty) {
+                                  setState(() {
+                                    errorMessage = "Please enter your email.";
+                                  });
+                                  return;
+                                }
+
+                                if (passwordcontroller.text.isEmpty) {
+                                  setState(() {
+                                    errorMessage = "Please enter a password.";
+                                  });
+                                  return;
+                                }
+
+                                if (!EmailValidator.validate(
+                                    emailcontroller.text)) {
+                                  setState(() {
+                                    errorMessage =
+                                        'Please enter a valid email address.';
+                                  });
+                                  return;
+                                }
+
+                                BlocProvider.of<LoginCubit>(context).login(
+                                  emailcontroller.text,
+                                  passwordcontroller.text,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xff0051FF),
+                                padding: const EdgeInsets.all(10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                minimumSize: const Size(double.infinity, 47),
+                              ),
+                              child: const Text(
+                                "Sign In",
+                                style: TextStyle(
+                                    color: Color(0xffE9E9E9),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
                             ),
-                            minimumSize: const Size(double.infinity, 47),
+                      if (errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
                           ),
-                          child: const Text(
-                            "Sign In",
-                            style: TextStyle(
-                                color: Color(0xffE9E9E9),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        );
+                        ),
+                    ],
+                  );
                 },
               ),
               const SizedBox(height: 32),
@@ -206,7 +224,7 @@ class LoginPage extends StatelessWidget {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => HomePage() /*SignupPage*/));
+                              builder: (context) => SignupPage()));
                       // ✅ تصحيح المسار إلى صفحة التسجيل
                     },
                     child: const Text(
